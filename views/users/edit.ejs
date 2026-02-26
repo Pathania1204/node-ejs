@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit User</title>
+</head>
+<body>
+<h1>Edit User Form</h1>
+<form action="/users/<%= user._id %>/update" method="POST">
+<p>
+<input type="text"
+       value="<%= user.name %>"
+       name="name"
+       placeholder="Full Name"
+       required />
+</p>
+<p>
+<input type="email"
+       value="<%= user.email %>"
+       name="email"
+       placeholder="Email Address"
+       required />
+</p>
+<p>
+<input type="password"
+       value="<%= user.password %>"
+       name="password"
+       placeholder="Password"
+       required />
+</p>
+
+<p>
+<input type="text"
+       value="<%= user.role %>"
+       name="role"
+       placeholder="Role"
+       required />
+</p>
+<p>
+<button type="submit">Update User</button>
+</p>
+</form>
+</body>
+</html>
