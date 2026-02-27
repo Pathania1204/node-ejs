@@ -2,80 +2,120 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import expressLayouts from "express-ejs-layouts";
+
+dotenv.config();
+
 const app = express();
-app.use(expressLayouts)
-app.set("layout","layout")
+
+/* ---------------- MIDDLEWARE ---------------- */
+
+app.use(expressLayouts);
+app.set("layout", "layout");
 app.set("view engine", "ejs");
-app.use(express.static("public"))
+
+app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-dotenv.config();  
+
+/* ---------------- DATABASE CONNECTION ---------------- */
+
+// ✅ Prevent multiple Mongo connections in serverless
+let isConnected = false;
+
 const dbConnect = async () => {
-  await mongoose.connect(process.env.MONGO_URL);
+  if (isConnected) return;
+
+  const db = await mongoose.connect(process.env.MONGO_URL);
+  isConnected = db.connections[0].readyState;
 };
 
+// connect DB before every request
+app.use(async (req, res, next) => {
   await dbConnect();
-  
-const productSchema = mongoose.Schema({
+  next();
+});
+
+/* ---------------- SCHEMAS ---------------- */
+
+const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
   price: { type: Number, required: true },
   imageurl: { type: String, required: true },
 });
-const userSchema = mongoose.Schema({
+
+const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true , unique:true},
+  email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, required: true },
 });
+
 const productModel = mongoose.model("products", productSchema);
 const userModel = mongoose.model("users", userSchema);
-app.get("/products", async (req,res)=>{
-  const products = await productModel.find()
-  res.render("products/index",{products})
-}); 
-app.get("/products/add",(req,res)=>{
-  res.render("products/add")
-})
-app.post("/products/save", async (req,res)=>{
-  await productModel.create(req.body)
-  res.redirect("/products")
-})
-app.get("/products/:id/edit", async (req,res)=>{
-  const product = await productModel.findById(req.params.id)
-  res.render("products/edit",{product})
-})
-app.post("/products/:id/update", async (req,res)=>{
-  await productModel.findByIdAndUpdate(req.params.id, req.body)
-  res.redirect("/products")
-})
-app.get("/products/:id/delete", async (req,res)=>{
-  await productModel.findByIdAndDelete(req.params.id)
-  res.redirect("/products")
-})
 
-// USERS
-app.get("/users", async (req,res)=>{
-  const users = await userModel.find()
-  res.render("users/index",{users})
-})
-app.get("/users/add",(req,res)=>{
-  res.render("users/add")
-})
-app.post("/users/save", async (req,res)=>{
-  await userModel.create(req.body)
-  res.redirect("/users")
-})
-app.get("/users/:id/edit", async (req,res)=>{
-  const user = await userModel.findById(req.params.id)
-  res.render("users/edit",{user})
-})
-app.post("/users/:id/update", async (req,res)=>{
-  await userModel.findByIdAndUpdate(req.params.id, req.body)
-  res.redirect("/users")
-})
-app.get("/users/:id/delete", async (req,res)=>{
-  await userModel.findByIdAndDelete(req.params.id)
-  res.redirect("/users")
-})
+/* ---------------- PRODUCT ROUTES ---------------- */
 
+app.get("/products", async (req, res) => {
+  const products = await productModel.find();
+  res.render("products/index", { products });
+});
+
+app.get("/products/add", (req, res) => {
+  res.render("products/add");
+});
+
+app.post("/products/save", async (req, res) => {
+  await productModel.create(req.body);
+  res.redirect("/products");
+});
+
+app.get("/products/:id/edit", async (req, res) => {
+  const product = await productModel.findById(req.params.id);
+  res.render("products/edit", { product });
+});
+
+app.post("/products/:id/update", async (req, res) => {
+  await productModel.findByIdAndUpdate(req.params.id, req.body);
+  res.redirect("/products");
+});
+
+app.get("/products/:id/delete", async (req, res) => {
+  await productModel.findByIdAndDelete(req.params.id);
+  res.redirect("/products");
+});
+
+/* ---------------- USER ROUTES ---------------- */
+
+app.get("/users", async (req, res) => {
+  const users = await userModel.find();
+  res.render("users/index", { users });
+});
+
+app.get("/users/add", (req, res) => {
+  res.render("users/add");
+});
+
+app.post("/users/save", async (req, res) => {
+  await userModel.create(req.body);
+  res.redirect("/users");
+});
+
+app.get("/users/:id/edit", async (req, res) => {
+  const user = await userModel.findById(req.params.id);
+  res.render("users/edit", { user });
+});
+
+app.post("/users/:id/update", async (req, res) => {
+  await userModel.findByIdAndUpdate(req.params.id, req.body);
+  res.redirect("/users");
+});
+
+app.get("/users/:id/delete", async (req, res) => {
+  await userModel.findByIdAndDelete(req.params.id);
+  res.redirect("/users");
+});
+
+/* ---------------- EXPORT FOR VERCEL ---------------- */
+
+export default app;
