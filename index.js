@@ -11,7 +11,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 dotenv.config();  
 const dbConnect = async () => {
-  await mongoose.connect(process.env.MONGO_URL);
+  try {
+    await mongoose.connect(process.env.MONGO_URL);
+    console.log("Database Connected");
+  } catch (err) {
+    console.log(err);
+    process.exit(1);
+  }
 };
 const startServer = async () => {
   await dbConnect();
