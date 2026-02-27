@@ -2,12 +2,17 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import expressLayouts from "express-ejs-layouts";
+import path from "path";
+import { fileURLToPath } from "url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.set("views", path.join(__dirname, "../views"));
 dotenv.config();
 
 const app = express();
 
-/* ---------------- MIDDLEWARE ---------------- */
 
 app.use(expressLayouts);
 app.set("layout", "layout");
@@ -17,9 +22,7 @@ app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-/* ---------------- DATABASE CONNECTION ---------------- */
 
-// ✅ Prevent multiple Mongo connections in serverless
 let isConnected = false;
 
 const dbConnect = async () => {
@@ -29,13 +32,11 @@ const dbConnect = async () => {
   isConnected = db.connections[0].readyState;
 };
 
-// connect DB before every request
 app.use(async (req, res, next) => {
   await dbConnect();
   next();
 });
 
-/* ---------------- SCHEMAS ---------------- */
 
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -116,6 +117,5 @@ app.get("/users/:id/delete", async (req, res) => {
   res.redirect("/users");
 });
 
-/* ---------------- EXPORT FOR VERCEL ---------------- */
 
 export default app;
