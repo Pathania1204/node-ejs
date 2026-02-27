@@ -13,10 +13,9 @@ dotenv.config();
 const dbConnect = async () => {
   await mongoose.connect(process.env.MONGO_URL);
 };
-const startServer = async () => {
+
   await dbConnect();
-  app.listen(8080, () => console.log("Server started"));
-};
+  
 const productSchema = mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
@@ -80,4 +79,3 @@ app.get("/users/:id/delete", async (req,res)=>{
   res.redirect("/users")
 })
 
-startServer();
