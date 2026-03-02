@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv"
 import expressLayouts from "express-ejs-layouts";
+import bcrypt from "bcryptjs"
 const app = express();
 app.use(expressLayouts)
 app.set("layout","layout")
@@ -15,6 +16,12 @@ mongoose.connect(process.env.MONGO_URL)
   .catch((err) => console.log(err));
 app.listen(8080, () => {
   console.log("Server started");
+});
+app.get("/users/signup",(req,res)=>{
+  res.render("users/signup");
+});
+app.get("/users/signin",(req,res)=>{
+  res.render("users/signin");
 });
 const productSchema = mongoose.Schema({
   name: { type: String, required: true },
@@ -78,4 +85,44 @@ app.get("/users/:id/delete", async (req,res)=>{
   await userModel.findByIdAndDelete(req.params.id)
   res.redirect("/users")
 })
+app.post("/users/signup", async (req, res) => {
+  const { name, email, password, role } = req.body;
+  const hash = await bcrypt.hash(password, 10);
+  await userModel.create({
+    name,
+    email,
+    password: hash,
+    role,
+  });
+  res.json({ message: "Signup Success" });
+});
 
+app.post("/users/signin", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await userModel.findOne({ email });
+  if (!user) return res.json({ message: "User not found" });
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) return res.json({ message: "Wrong password" });
+  res.json({ message: "Login Success" });
+});
+app.post("/users/saveuser", async (req, res) => {
+  await userModel.create(req.body);
+  res.redirect("/users");
+});
+app.post("/users/checkuser", async (req, res) => {
+  const { email, password } = req.body;
+  const found = await userModel.findOne({ email });
+  if (!found) {
+    return res.send("User not found");
+  }
+  const chkPassword = await bcrypt.compare(
+    password,
+    found.password
+  );
+  if (chkPassword) {
+    res.redirect("/");
+  } else {
+    res.send("Wrong Password");
+  }
+
+});
